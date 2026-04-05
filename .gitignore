@@ -39,3 +39,6 @@
 #/*.[pP][oO][tT][mM]
 #/*.[pP][pP][sS]
 #/*.[pP][pP][sS][mM]
+
+# Ignore logs folder
+logs/
