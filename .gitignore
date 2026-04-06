@@ -7,6 +7,17 @@
 *.[lL][aA][cC][cC][dD][bB]
 *.[lL][dD][bB]
 
+# Local build output artifacts
+tests/out/
+VcsBuildTempApp.accdb
+
+# VCS addin build/index logs generated in test source folders
+tests/**/Build.log
+tests/**/vcs-index.json
+
+# Temporary/downloaded upstream scripts (used for local debugging only)
+scripts/_upstream_*.ps1
+
 # The following sections constitute a list of Office file extensions that support VBA.
 # If you want to exclude Office files from your repo, uncomment the corresponding file extensions.
 
