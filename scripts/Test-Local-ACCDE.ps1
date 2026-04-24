@@ -76,8 +76,12 @@ Write-Host ""
 
 Write-Host "=== Step 1: Build .accdb from VCS source ==="
 
-# Blank seed database that the VCS addin transforms into the properly named one.
-# Must live at the repo root so the addin's relative path lookups work.
+# Ensure output directory exists upfront.
+New-Item -Path $TargetDir -ItemType Directory -Force | Out-Null
+
+# The addin derives the output directory from the fixture's ExportFolder path,
+# so the .accdb will be built at the repo root regardless of CWD.
+# We move it to TargetDir afterwards to keep the repo root clean.
 $TempDbPath = Join-Path $RepoRoot "VcsBuildTempApp.accdb"
 
 $access = $null
@@ -131,10 +135,9 @@ finally {
     }
 }
 
-New-Item -Path $TargetDir -ItemType Directory -Force | Out-Null
 $TargetAccdbPath = Join-Path $TargetDir $BuiltFileName
-Copy-Item -Path $BuiltFilePath -Destination $TargetAccdbPath -Force
-Write-Host "Copied .accdb to: $TargetAccdbPath"
+Move-Item -Path $BuiltFilePath -Destination $TargetAccdbPath -Force
+Write-Host "Moved .accdb to: $TargetAccdbPath"
 
 if (Test-Path $TempDbPath) {
     Remove-Item $TempDbPath -Force
