@@ -109,6 +109,10 @@ foreach ($folder in $folders) {
 
     if ($OfficeAppDetection -ieq "automatic") {
         $app = Get-OfficeApp -FileExtension $fileExtension
+        if (-not $app) {
+            Write-Host "Unknown file extension: $fileExtension. Skipping..."
+            continue
+        }
     }
     elseif ($officeApps.Count -eq 1) {
         # Note that when an array has only one element, PowerShell will treat it as a single value
