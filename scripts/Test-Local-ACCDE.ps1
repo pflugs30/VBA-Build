@@ -6,6 +6,7 @@
 .DESCRIPTION
     Replicates what the AccessCodeLib/msaccess-vcs-build action does in two stages:
       1. Builds an .accdb from VCS source using the locally installed msaccess-vcs-addin.
+      1b. (Optional) Prepares the .accdb using an Application-Config.json file.
       2. Compiles that .accdb to .accde via Access SysCmd(603).
 
     The script derives the repo root from its own location, so it can be run from anywhere.
@@ -23,16 +24,26 @@
 .PARAMETER VcsAddInPath
     Full path to the installed Version Control.accda addin file.
 
+.PARAMETER AppConfigFile
+    Optional path to a JSON configuration file for post-build preparation.
+    Supports running VBA procedures, setting database properties, removing
+    test modules by pattern, and removing VBA references by name.
+    Relative paths are resolved from the repo root.
+
 .EXAMPLE
     .\scripts\Test-Local-ACCDE.ps1
 
 .EXAMPLE
     .\scripts\Test-Local-ACCDE.ps1 -SourceDir "tests/AccessDatabase.accde" -TargetDir "tests/out"
+
+.EXAMPLE
+    .\scripts\Test-Local-ACCDE.ps1 -AppConfigFile "tests/Application-Config.json"
 #>
 param(
     [string]$SourceDir = "tests/AccessDatabase.accde",
     [string]$TargetDir = "tests/out",
-    [string]$VcsAddInPath = "C:\Users\pflug\AppData\Roaming\MSAccessVCS\Version Control.accda"
+    [string]$VcsAddInPath = "C:\Users\pflug\AppData\Roaming\MSAccessVCS\Version Control.accda",
+    [string]$AppConfigFile = ""
 )
 
 Set-StrictMode -Version Latest
@@ -52,6 +63,14 @@ if (-not [System.IO.Path]::IsPathRooted($TargetDir)) {
 $SourceDir = [System.IO.Path]::GetFullPath($SourceDir)
 $TargetDir = [System.IO.Path]::GetFullPath($TargetDir)
 
+# Resolve optional AppConfigFile path
+if (-not [string]::IsNullOrEmpty($AppConfigFile)) {
+    if (-not [System.IO.Path]::IsPathRooted($AppConfigFile)) {
+        $AppConfigFile = Join-Path $RepoRoot $AppConfigFile
+    }
+    $AppConfigFile = [System.IO.Path]::GetFullPath($AppConfigFile)
+}
+
 # Strip extension -- used with Application.Run("path.FunctionName")
 $AddInProcessPath = [System.IO.Path]::ChangeExtension($VcsAddInPath, "").TrimEnd('.')
 
@@ -70,6 +89,9 @@ Write-Host "Repo root : $RepoRoot"
 Write-Host "Source    : $SourceDir"
 Write-Host "Target    : $TargetDir"
 Write-Host "Add-in    : $VcsAddInPath"
+if (-not [string]::IsNullOrEmpty($AppConfigFile)) {
+    Write-Host "App config: $AppConfigFile"
+}
 Write-Host ""
 
 # -- Step 1: Build .accdb from VCS source -------------------------------------
@@ -154,6 +176,35 @@ $sw.Stop()
 Write-Host " done"
 
 Write-Host ""
+
+# -- Step 1b: Prepare application (optional) ----------------------------------
+
+if (-not [string]::IsNullOrEmpty($AppConfigFile)) {
+    Write-Host "=== Step 1b: Prepare application ==="
+
+    if (-not (Test-Path $AppConfigFile)) {
+        Write-Error "App config file not found: $AppConfigFile"
+        exit 1
+    }
+
+    Write-Host "Running Prepare-Application on: $TargetAccdbPath"
+    & "$PSScriptRoot\Prepare-Application.ps1" `
+        -AccessFile $TargetAccdbPath -ConfigFile $AppConfigFile
+    if (-not $?) {
+        Write-Error "Prepare-Application failed."
+        exit 1
+    }
+
+    # Wait for Access to fully terminate before Step 2.
+    Write-Host "Waiting for Access to shut down after preparation..." -NoNewline
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    while ((Get-Process MSACCESS -ErrorAction SilentlyContinue) -and ($sw.Elapsed.TotalSeconds -lt 30)) {
+        Start-Sleep -Milliseconds 500
+    }
+    $sw.Stop()
+    Write-Host " done"
+    Write-Host ""
+}
 
 # -- Step 2: Compile .accdb to .accde -----------------------------------------
 
