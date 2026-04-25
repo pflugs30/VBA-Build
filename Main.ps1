@@ -29,7 +29,7 @@ $hasAccessDe = $false
 
 function Get-OfficeApp {
     param (
-        [Parameter(Mandatory=$true)]
+        [Parameter(Mandatory = $true)]
         [string]$FileExtension
     )
 
@@ -55,13 +55,15 @@ if ($OfficeAppDetection -ieq "automatic") {
             if ($officeApps -notcontains $app) {
                 $officeApps += $app
             }
-        } else {
+        }
+        else {
             Write-Host "Unknown file extension: $FileExtension. Skipping..."
             continue
         }
     }
     
-} else {
+}
+else {
     # We parse the OfficeApp parameter to get the name of the Office application
     $officeApps = $OfficeAppDetection -split ","
     $officeApps = $officeApps | ForEach-Object { $_.Trim() }
@@ -78,7 +80,8 @@ if ($TestFramework -ieq "rubberduck") {
     Write-Host "Install Rubberduck"
     . "$PSScriptRoot/scripts/Install-Rubberduck-VBA.ps1"
     Write-Host "========================="
-} else {
+}
+else {
     Write-Host "Test framework is not Rubberduck. Skipping installation."
 }
 
@@ -106,13 +109,16 @@ foreach ($folder in $folders) {
 
     if ($OfficeAppDetection -ieq "automatic") {
         $app = Get-OfficeApp -FileExtension $fileExtension
-    } elseif ($officeApps.Count -eq 1) {
+    }
+    elseif ($officeApps.Count -eq 1) {
         # Note that when an array has only one element, PowerShell will treat it as a single value
         $app = $officeApps
-    } elseif ($officeApps.Count -gt 1) {
+    }
+    elseif ($officeApps.Count -gt 1) {
         Write-Host "Multiple Office applications specified. Please specify only one."
         exit 1
-    } else {
+    }
+    else {
         Write-Host "No valid Office applications specified. Exiting script."
         exit 1
     }
@@ -124,7 +130,8 @@ foreach ($folder in $folders) {
             Write-Host "Access ACCDE target detected. Adding to Access ACCDE folders list..."
             $accessDeFolders += "${SourceDir}/${folder}"
             $hasAccessDe = $true
-        } else {
+        }
+        else {
             Write-Host "Access database detected. Adding to Access folders list..."
             $accessFolders += "${SourceDir}/${folder}"
             $hasAccessDatabase = $true
@@ -145,7 +152,8 @@ foreach ($folder in $folders) {
     if ($LASTEXITCODE -ne 0) {
         Write-Host "Build-VBA.ps1 failed with exit code $LASTEXITCODE"
         exit $LASTEXITCODE
-    } else {
+    }
+    else {
         $successfulBuilds++
     }
   
@@ -155,10 +163,12 @@ foreach ($folder in $folders) {
         if (-not $rubberduckTestResult) {
             Write-Host "Rubberduck tests were not completed successfully, but continuing with the script..."
         }
-    } else {
+    }
+    else {
         if ($fileExtension -eq "ppam") {
             Write-Host "Skipping tests for PowerPoint add-in (.ppam) files since Rubberduck can't run tests on them directly."
-        } else {
+        }
+        else {
             Write-Host "Test framework is not Rubberduck. Skipping tests."
         }
     }
