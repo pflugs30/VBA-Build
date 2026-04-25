@@ -47,7 +47,7 @@ runs:
     - name: "Build Access Database (if detected)"
       if: steps.run_vba_build.outputs.has-access-database == 'True'
       id: "build_access"
-      uses: ./subactions/msaccess-vcs-build-all
+      uses: pflugs30/VBA-Build/subactions/msaccess-vcs-build-all@post-build-features
       with:
         source-dir-values: "${{ steps.run_vba_build.outputs.access-folders }}"
         target-dir: "${{ inputs['source-dir'] }}/out"
@@ -68,7 +68,7 @@ runs:
     - name: "Build Access ACCDE (if detected, no app-config)"
       if: steps.run_vba_build.outputs.has-access-de == 'True' && inputs['app-config'] == ''
       id: "build_access_de"
-      uses: ./subactions/msaccess-vcs-build-all
+      uses: pflugs30/VBA-Build/subactions/msaccess-vcs-build-all@post-build-features
       with:
         source-dir-values: "${{ steps.run_vba_build.outputs.access-de-folders }}"
         target-dir: "${{ inputs['source-dir'] }}/out"
@@ -78,7 +78,7 @@ runs:
     - name: "Build ACCDB for ACCDE (if detected, with app-config)"
       if: steps.run_vba_build.outputs.has-access-de == 'True' && inputs['app-config'] != ''
       id: "build_access_de_with_config"
-      uses: ./subactions/msaccess-vcs-build-all
+      uses: pflugs30/VBA-Build/subactions/msaccess-vcs-build-all@post-build-features
       with:
         source-dir-values: "${{ steps.run_vba_build.outputs.access-de-folders }}"
         target-dir: "${{ inputs['source-dir'] }}/out"
