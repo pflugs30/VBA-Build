@@ -107,12 +107,17 @@ New-Item -Path $TargetDir -ItemType Directory -Force | Out-Null
 $TempDbPath = Join-Path $RepoRoot "VcsBuildTempApp.accdb"
 
 $access = $null
+$accessProcessId = $null
 $BuiltFilePath = $null
 $BuiltFileName = $null
 
 try {
     $access = New-Object -ComObject Access.Application
     $access.Visible = $true
+
+    # Track the specific Access process started by this COM instance so we
+    # can wait on it without being affected by unrelated Access windows.
+    try { $accessProcessId = $access.hWndAccessApp } catch { $accessProcessId = $null }
 
     if (Test-Path $TempDbPath) { Remove-Item $TempDbPath -Force }
     $access.NewCurrentDatabase($TempDbPath)
@@ -158,8 +163,15 @@ finally {
 }
 
 $TargetAccdbPath = Join-Path $TargetDir $BuiltFileName
-Move-Item -Path $BuiltFilePath -Destination $TargetAccdbPath -Force
-Write-Host "Moved .accdb to: $TargetAccdbPath"
+$resolvedBuiltPath = [System.IO.Path]::GetFullPath($BuiltFilePath)
+$resolvedTargetPath = [System.IO.Path]::GetFullPath($TargetAccdbPath)
+if ($resolvedBuiltPath -ieq $resolvedTargetPath) {
+    Write-Host "Built .accdb is already in target directory: $TargetAccdbPath"
+}
+else {
+    Move-Item -Path $BuiltFilePath -Destination $TargetAccdbPath -Force
+    Write-Host "Moved .accdb to: $TargetAccdbPath"
+}
 
 if (Test-Path $TempDbPath) {
     Remove-Item $TempDbPath -Force
@@ -169,7 +181,7 @@ if (Test-Path $TempDbPath) {
 # Wait for Access to fully terminate before starting Step 2 (prevents COM state leaks).
 Write-Host "Waiting for Access to shut down..." -NoNewline
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
-while ((Get-Process MSACCESS -ErrorAction SilentlyContinue) -and ($sw.Elapsed.TotalSeconds -lt 30)) {
+while (($null -ne $accessProcessId) -and (Get-Process -Id $accessProcessId -ErrorAction SilentlyContinue) -and ($sw.Elapsed.TotalSeconds -lt 30)) {
     Start-Sleep -Milliseconds 500
 }
 $sw.Stop()
@@ -198,7 +210,7 @@ if (-not [string]::IsNullOrEmpty($AppConfigFile)) {
     # Wait for Access to fully terminate before Step 2.
     Write-Host "Waiting for Access to shut down after preparation..." -NoNewline
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    while ((Get-Process MSACCESS -ErrorAction SilentlyContinue) -and ($sw.Elapsed.TotalSeconds -lt 30)) {
+    while (($null -ne $accessProcessId) -and (Get-Process -Id $accessProcessId -ErrorAction SilentlyContinue) -and ($sw.Elapsed.TotalSeconds -lt 30)) {
         Start-Sleep -Milliseconds 500
     }
     $sw.Stop()
@@ -237,7 +249,12 @@ if (-not `$ok) { Write-Error 'accde file was not created.'; exit 1 }
 
 try {
     Write-Host "Compiling (subprocess)..."
-    pwsh -NoProfile -ExecutionPolicy Bypass -File $compileScript `
+    $powershellExe = (Get-Command pwsh -ErrorAction SilentlyContinue).Path
+    if ([string]::IsNullOrWhiteSpace($powershellExe)) {
+        $powershellExe = (Get-Command powershell -ErrorAction Stop).Path
+    }
+
+    & $powershellExe -NoProfile -ExecutionPolicy Bypass -File $compileScript `
         -SourceFile $TargetAccdbPath -DestFile $AccdeDestPath
     if ($LASTEXITCODE -ne 0) {
         Write-Error "Compile step failed (exit $LASTEXITCODE)."
