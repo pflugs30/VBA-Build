@@ -2,23 +2,22 @@ name: Run msaccess-vcs-build on all Access folders
 description: This action runs the msaccess-vcs-build action on all Access folders found in the source directory.
 
 inputs:
-
   source-dir-values:
-    description: '|||-separated values to pass'
+    description: "|||-separated values to pass"
     required: true
   target-dir:
-    description: 'Target directory for the build output'
+    description: "Target directory for the build output"
     required: true
   compile:
-    description: 'Whether to compile the Access database'
+    description: "Whether to compile the Access database"
     required: false
     default: "false"
   vcs-url:
-    description: 'VCS URL for the Access database add-in'
+    description: "VCS URL for the Access database add-in"
     required: false
     default: "https://api.github.com/repos/josef-poetzl/msaccess-vcs-addin/releases/tags/v4.1.2-build"
   expected-sha256:
-    description: 'Expected SHA256 digest of the VCS asset (optional - if not provided, will be fetched from release)'
+    description: "Expected SHA256 digest of the VCS asset (optional - if not provided, will be fetched from release)"
     required: false
 
 runs:
@@ -40,12 +39,12 @@ runs:
         echo "Fetching release information from: ${{ inputs.vcs-url }}"
         RELEASE_DATA=$(curl -s "${{ inputs.vcs-url }}")
         ACTUAL_SHA=$(echo "$RELEASE_DATA" | jq -r '.assets[0].digest // empty' | sed 's/sha256://')
-        
+
         if [[ -z "$ACTUAL_SHA" ]]; then
           echo "Error: Could not extract SHA256 digest from release at ${{ inputs.vcs-url }}"
           exit 1
         fi
-        
+
         if [[ -n "${{ inputs.expected-sha256 }}" ]]; then
           echo "Expected SHA256: ${{ inputs.expected-sha256 }}"
           echo "Actual SHA256: $ACTUAL_SHA"
@@ -65,7 +64,7 @@ runs:
 
     - name: Call action 0
       if: ${{ fromJSON(steps.parse.outputs.count) > 0 }}
-      uses: AccessCodeLib/msaccess-vcs-build@c4bfcb0958016f6523a2c7119ac434116a76e84a # v1.0.1
+      uses: pflugs30/msaccess-vcs-build@fix/accdb-lock-wait # fork: wait for Access to release file lock before copy
       with:
         source-dir: ${{ steps.parse.outputs.value0 }}
         target-dir: ${{ inputs.target-dir }}
@@ -74,7 +73,7 @@ runs:
 
     - name: Call action 1
       if: ${{ fromJSON(steps.parse.outputs.count) > 1 }}
-      uses: AccessCodeLib/msaccess-vcs-build@c4bfcb0958016f6523a2c7119ac434116a76e84a # v1.0.1
+      uses: pflugs30/msaccess-vcs-build@fix/accdb-lock-wait # fork: wait for Access to release file lock before copy
       with:
         source-dir: ${{ steps.parse.outputs.value1 }}
         target-dir: ${{ inputs.target-dir }}
@@ -83,7 +82,7 @@ runs:
 
     - name: Call action 2
       if: ${{ fromJSON(steps.parse.outputs.count) > 2 }}
-      uses: AccessCodeLib/msaccess-vcs-build@c4bfcb0958016f6523a2c7119ac434116a76e84a # v1.0.1
+      uses: pflugs30/msaccess-vcs-build@fix/accdb-lock-wait # fork: wait for Access to release file lock before copy
       with:
         source-dir: ${{ steps.parse.outputs.value2 }}
         target-dir: ${{ inputs.target-dir }}
@@ -92,7 +91,7 @@ runs:
 
     - name: Call action 3
       if: ${{ fromJSON(steps.parse.outputs.count) > 3 }}
-      uses: AccessCodeLib/msaccess-vcs-build@c4bfcb0958016f6523a2c7119ac434116a76e84a # v1.0.1
+      uses: pflugs30/msaccess-vcs-build@fix/accdb-lock-wait # fork: wait for Access to release file lock before copy
       with:
         source-dir: ${{ steps.parse.outputs.value3 }}
         target-dir: ${{ inputs.target-dir }}
@@ -101,7 +100,7 @@ runs:
 
     - name: Call action 4
       if: ${{ fromJSON(steps.parse.outputs.count) > 4 }}
-      uses: AccessCodeLib/msaccess-vcs-build@c4bfcb0958016f6523a2c7119ac434116a76e84a # v1.0.1
+      uses: pflugs30/msaccess-vcs-build@fix/accdb-lock-wait # fork: wait for Access to release file lock before copy
       with:
         source-dir: ${{ steps.parse.outputs.value4 }}
         target-dir: ${{ inputs.target-dir }}
