@@ -37,7 +37,13 @@ runs:
       shell: bash
       run: |
         echo "Fetching release information from: ${{ inputs.vcs-url }}"
-        RELEASE_DATA=$(curl -s "${{ inputs.vcs-url }}")
+        # Authenticate when a token is available to avoid the unauthenticated
+        # GitHub API rate limit (60 req/hr per IP on shared CI runners).
+        AUTH_HEADER=()
+        if [[ -n "$GITHUB_TOKEN" ]]; then
+          AUTH_HEADER=(-H "Authorization: Bearer $GITHUB_TOKEN")
+        fi
+        RELEASE_DATA=$(curl -s "${AUTH_HEADER[@]}" "${{ inputs.vcs-url }}")
         ACTUAL_SHA=$(echo "$RELEASE_DATA" | jq -r '.assets[0].digest // empty' | sed 's/sha256://')
 
         if [[ -z "$ACTUAL_SHA" ]]; then
