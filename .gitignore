@@ -14,6 +14,8 @@ VcsBuildTempApp.accdb
 # VCS addin build/index logs generated in test source folders
 tests/**/Build.log
 tests/**/vcs-index.json
+# v5 binary change index (regenerated on each export/build; not source)
+tests/**/vcs-index.idx
 
 # Temporary/downloaded upstream scripts (used for local debugging only)
 scripts/_upstream_*.ps1
