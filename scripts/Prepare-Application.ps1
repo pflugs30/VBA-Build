@@ -26,18 +26,28 @@
     .\Prepare-Application.ps1 -AccessFile "tests\out\MyApp.accdb" -ConfigFile "Application-Config.json"
 
 .NOTES
-    Config JSON format:
+    Config JSON format (all keys optional; applied in the order below):
     {
-      "RemoveModules": ["Tests_*"],
-      "RemoveReferences": ["Rubberduck"],
-      "Procedures": [
+      "RemoveModules": ["Tests_*"],          # name glob patterns (VBA components)
+      "RemoveReferences": ["Rubberduck"],     # VBA reference names
+      "Procedures": [                          # public procs run via Application.Run
         { "Name": "ChangeEnvironment", "Parameters": [3] }
       ],
-      "DatabaseProperties": [
+      "DatabaseProperties": [                  # DAO database properties (created if absent)
         { "Name": "StartUpShowDBWindow", "Type": 1, "Value": false },
         { "Name": "StartUpForm", "Type": 10, "Value": "frmMainMenu" }
       ]
     }
+
+    DatabaseProperties "Type" maps to the DAO DataTypeEnum used by CreateProperty:
+      1  = Boolean
+      3  = Integer
+      4  = Long
+      8  = DateTime
+      10 = Text
+
+    RemoveModules / RemoveReferences extend the upstream msaccess-vcs-build config
+    (which supports only Procedures + DatabaseProperties).
 #>
 param(
     [Parameter(Mandatory = $true)]
@@ -332,3 +342,5 @@ finally {
     [GC]::Collect()
     [GC]::WaitForPendingFinalizers()
 }
+
+exit 0
