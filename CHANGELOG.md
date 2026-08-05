@@ -6,6 +6,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- `vcs-url` and `expected-sha256` inputs on the action to select which
+  `msaccess-vcs-addin` release is used to build Access databases. Defaults to the
+  public v5.0.1 release, so existing callers are unaffected; override them to
+  consume a custom or pre-release add-in build.
+
+### Fixed
+- Aligned the internal `msaccess-vcs-build-all` subaction reference so add-in URL
+  overrides take effect on the current branch.
 
 ## [2.0.0] - 2026-02-18
 
